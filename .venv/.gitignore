@@ -1,0 +1,18 @@
+# Python cache files
+__pycache__/
+*.pyc
+
+# Machine Learning model files
+*.pkl
+
+# Log files
+*.log
+
+# Environment files
+.env
+
+# macOS junk files
+.DS_Store
+
+# Virtual Environment folder
+venv/
