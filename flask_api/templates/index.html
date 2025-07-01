@@ -1,128 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Energy Consumption Predictor</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8">
+  <title>Energy Consumption Predictor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    input[disabled] {
+      background-color: #f0f0f0;
+      border: none;
+      font-weight: bold;
+      color: #333;
+    }
+  </style>
 </head>
-<script>
+<body>
+  <div class="container">
+    <h2 class="mb-4 text-center">🔋 Energy Consumption Predictor</h2>
+
+    <!-- Datetime display -->
+    <p id="datetime-label" style="font-weight: bold; color: #444;"></p>
+
+    <form action="/predict" id="predictionForm" method="POST">
+      <!-- Manual or Auto Location -->
+      <div class="mb-3">
+        <label>Enter your location (or allow auto-location):</label>
+        <input type="text" id="location" name="location" required><br><br>
+      </div>
+
+      <!-- Hidden full time fields -->
+      <input type="number" id="minute" name="minute" hidden>
+      <input type="number" id="second" name="second" hidden>
+
+      <!-- Hour -->
+      <div class="mb-3">
+        <label for="hour">Hour (24-hour format):</label>
+        <input type="number" class="form-control" id="hour" name="hour" min="0" max="23" required><br>
+      </div>
+
+      <!-- Day -->
+      <div class="mb-3">
+        <label for="day">Day:</label>
+        <input type="number" class="form-control" id="day" name="day" min="1" max="31" required><br>
+      </div>
+
+      <!-- Month (number + readable name) -->
+      <div class="mb-3">
+        <label for="month">Month:</label>
+        <input type="number" id="month" name="month" min="1" max="12" required hidden>
+        <input type="text" id="month_display" disabled><br>
+      </div>
+
+      <!-- Day of week -->
+      <div class="mb-3">
+        <label for="day_of_week">Day of Week:</label>
+        <input type="number" id="day_of_week" name="day_of_week" min="0" max="6" required hidden>
+        <input type="text" id="day_of_week_display" disabled><br>
+      </div>
+
+      <!-- Weekend? -->
+      <div class="mb-3">
+        <label for="is_weekend">Is it weekend?</label>
+        <input type="number" class="form-control" id="is_weekend" name="is_weekend" min="0" max="1" required><br>
+      </div>
+
+      <!-- Button -->
+      <button type="button" class="btn btn-primary w-100" onclick="getLocationAndSubmit()">Predict with Auto Location</button><br><br>
+    </form>
+
+    <!-- Result -->
+    <div id="result" style="font-size: 18px; color: #333; padding: 10px;">
+      <strong>Predicted Energy Consumption:</strong> <span id="prediction"></span> kWh
+    </div>
+  </div>
+
+  <script>
     window.onload = function () {
-        const now = new Date();
+      const now = new Date();
 
-        // Auto-fill hour, day, month
-        document.getElementById('hour').value = now.getHours();
-        document.getElementById('day').value = now.getDate();
-        document.getElementById('month').value = now.getMonth() + 1;
+      const monthNames = ["January", "February", "March", "April", "May", "June",
+                          "July", "August", "September", "October", "November", "December"];
+      const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-        // Auto-fill day_of_week (0 = Monday, 6 = Sunday)
-        const jsDay = now.getDay();
-        const dayOfWeek = (jsDay === 0) ? 6 : jsDay - 1;
-        document.getElementById('day_of_week').value = dayOfWeek;
+      const hour = now.getHours();
+      const minute = now.getMinutes();
+      const second = now.getSeconds();
+      const date = now.getDate();
+      const month = now.getMonth(); // 0-based
+      const jsDay = now.getDay(); // 0 = Sunday
+      const dayOfWeek = jsDay === 0 ? 6 : jsDay - 1;
 
-        // Auto-fill is_weekend (1 if Saturday/Sunday, 0 otherwise)
-        document.getElementById('is_weekend').value = (dayOfWeek === 5 || dayOfWeek === 6) ? 1 : 0;
+      // Fill form values
+      document.getElementById('hour').value = hour;
+      document.getElementById('minute').value = minute;
+      document.getElementById('second').value = second;
+      document.getElementById('day').value = date;
+      document.getElementById('month').value = month + 1;
+      document.getElementById('day_of_week').value = dayOfWeek;
+      document.getElementById('is_weekend').value = (dayOfWeek >= 5) ? 1 : 0;
 
-        // Fetch weather data when the user selects a location
-        document.getElementById('location').addEventListener('change', function () {
-            fetchWeatherData();
-        });
+      // Display readable versions
+      document.getElementById('month_display').value = monthNames[month];
+      document.getElementById('day_of_week_display').value = dayNames[dayOfWeek];
+      document.getElementById('datetime-label').innerText =
+        `🕒 Current Time: ${hour}:${minute}:${second} — ${dayNames[dayOfWeek]}, ${date} ${monthNames[month]}`;
+    };
 
-        // Fetch weather data based on location
-        function fetchWeatherData() {
-            const location = document.getElementById('location').value || 'Delhi'; // Default to Delhi
-            fetch(`/weather?location=${location}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.temperature) {
-                        document.getElementById('temperature').value = data.temperature;
-                        document.getElementById('humidity').value = data.humidity;
-                        document.getElementById('wind_speed').value = data.wind_speed;
-                    } else {
-                        alert("Could not fetch weather data. Please check the location.");
-                    }
-                })
-                .catch(error => alert("weather data"));
-        }
+    function getLocationAndSubmit() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
 
-        // Handle form submission and prediction
-        const form = document.getElementById("prediction-form");  // Assuming your form has id="prediction-form"
-        form.addEventListener("submit", function(event) {
-            event.preventDefault();  // Prevent the default form submission behavior
-
-            fetch('/predict', {
-                method: 'POST',
-                body: new FormData(form)  // Send the form data to the server
-            })
+          fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
             .then(response => response.json())
             .then(data => {
-                // Display the prediction result
-                document.getElementById("prediction").innerText = `Predicted Energy Consumption: ${data.predicted_energy_kWh} kWh`;
-            })
-            .catch(error => console.error('Error:', error));
+              const inputLocation = document.getElementById('location').value;
+              if (!inputLocation) {
+                document.getElementById('location').value = data.address.city || data.address.town || "Delhi";
+              }
+              document.getElementById('predictionForm').submit();
+            });
         });
+      } else {
+        alert("Geolocation not supported.");
+      }
     }
-</script>
-<body>
-    <div class="container">
-        <h2 class="mb-4 text-center">🔋 Energy Consumption Predictor </h2>
-
-        <form action="/predict" id="prediction-form" method="POST">
-            <div class="mb-3">
-                <label>Enter your location:</label>
-                <input type="text" id="location" name="location" required><br><br>
-            </div>
-            <div class="mb-3">
-                <label for="hour">What is the current time
-                    <span title="Current hour in 24-hour format. e.g., 14 for 2 PM">❓</span>
-                </label>
-                <input type="number" class="form-control" id="hour" name="hour" min="0" max="23" required><br><br>
-            </div>
-            <div class="mb-3">
-                <label for="day">What day is today
-                    <span title="Today's day of the month. e.g., 19 for 19th April">❓</span>
-                </label>
-                <input type="number" class="form-control" id="day" name="day" min="1" max="31" required><br><br>
-            </div>
-            <div class="mb-3">
-                <label for="month">What is the month
-                    <span title="Current month as a number. e.g., 4 for April">❓</span>
-                </label>
-                <input type="number" class="form-control" id="month" name="month" min="1" max="12" required><br><br>
-            </div>
-            <div class="mb-3">
-                <label for="day_of_week">Which day of the week is it
-                    <span title="0 = Monday, 6 = Sunday">❓</span>
-                </label>
-                <input type="number" class="form-control" id="day_of_week" name="day_of_week" min="0" max="6" required step="0.1"><br><br>
-            </div>
-            <div class="mb-3">
-                <label for="isWeekend">Is it Weekend?
-                    <span title="1 = Yes (Weekend), 0 = No">❓</span>
-                </label>
-                <input type="number" class="form-control" id="is_weekend" name="is_weekend" min="0" max="1" required step="0.1"><br><br>
-            </div>
-
-            <button type="submit" class="btn btn-primary w-100">Predict</button><br><br>
-        </form>
-
-        <div id="result" style="font-size: 18px; color: #333; padding: 10px; margin-top: 20px;">
-            <strong>Predicted Energy Consumption: </strong><span id="prediction"></span> kWh
-        </div>        
-
-    {% if prediction %}
-        <div class="result">
-            <h3>Predicted Energy Consumption: <strong>{{ prediction }} kWh</strong></h3>
-            <p>This is an approximate estimate based on recent environmental and temporal factors.</p>
-        </div>
-    {% endif %}
-        <div id="result" class="alert alert-info mt-4 d-none"></div>
-        {% if error %}
-            <div class="error-message">
-            <p>{{ error }}</p>
-            </div>
-        {% endif %}
-
-    </div>
+  </script>
 </body>
 </html>

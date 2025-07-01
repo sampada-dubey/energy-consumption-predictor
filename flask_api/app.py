@@ -61,8 +61,8 @@ def predict():
     wind_speed = weather_data['wind_speed']
 
     # Prepare feature vector (make sure it matches model training!)
-    columns = ['hour', 'day', 'month', 'day_of_week', 'is_weekend']
-    features = pd.DataFrame([[hour, day, month, day_of_week, is_weekend]],
+    columns = ['hour', 'day', 'month', 'day_of_week', 'is_weekend','temperature', 'humidity', 'wind_speed']
+    features = pd.DataFrame([[hour, day, month, day_of_week, is_weekend, temperature, humidity, wind_speed]],
                         columns=columns)
     # Predict
     prediction = model.predict(features)
@@ -71,7 +71,7 @@ def predict():
     # Friendly message
     message = f"🔋 Predicted Energy Consumption for {location}: {predicted_value} kWh ⚡"
 
-    return jsonify({'predicted_energy_kWh': predicted_value, 'message': message})
+    return render_template('result.html', prediction=predicted_value, location=location, message=message)
 
 # Home page
 @app.route('/')
