@@ -65,14 +65,11 @@
       </div>
 
       <!-- Button -->
-      <button type="button" class="btn btn-primary w-100" onclick="getLocationAndSubmit()">Predict with Auto Location</button><br><br>
+      <button type="button" class="btn btn-primary w-100" onclick="getLocationAndSubmit()" style="font-size: 18px; color: #333; padding: 10px;">
+        <strong>
+          Predict Energy Consumption</button><br><br><span id="prediction"></span>
+        </strong>
     </form>
-
-    <!-- Result -->
-    <div id="result" style="font-size: 18px; color: #333; padding: 10px;">
-      <strong>Predicted Energy Consumption:</strong> <span id="prediction"></span> kWh
-    </div>
-  </div>
 
   <script>
     window.onload = function () {
