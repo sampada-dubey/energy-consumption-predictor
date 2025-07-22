@@ -10,7 +10,7 @@ app = Flask(__name__)
 # Load the trained model
 model = joblib.load('model.pkl')
 
-# Function to get weather data
+# Function to get weather data from OpenWeatherMap
 def get_weather_data(location):
     api_key = "a181a62a126d8ca5b77ebaf0ead541e6"
     geo_url = f"http://api.openweathermap.org/data/2.5/weather?q={location}&appid={api_key}&units=metric"
@@ -38,6 +38,23 @@ def get_weather_data(location):
             }
     return None
 
+# Function to return weather condition with emoji
+def get_weather_description(temp, humidity, wind_speed):
+    if humidity > 80 and temp < 25:
+        return "Rainy 🌧️"
+    elif temp >= 35 and humidity < 60:
+        return "Hot 🔥"
+    elif wind_speed >= 10:
+        return "Windy 🍃"
+    elif 25 <= temp <= 34 and humidity < 70:
+        return "Sunny ☀️"
+    elif 15 <= temp < 25 and humidity > 60:
+        return "Cloudy 🌥️"
+    elif temp < 15:
+        return "Cold ❄️"
+    else:
+        return "Moderate 🌤️"
+
 # Prediction Route
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -60,18 +77,27 @@ def predict():
     humidity = weather_data['humidity']
     wind_speed = weather_data['wind_speed']
 
-    # Prepare feature vector (make sure it matches model training!)
-    columns = ['hour', 'day', 'month', 'day_of_week', 'is_weekend','temperature', 'humidity', 'wind_speed']
+    # Prepare input vector
+    columns = ['hour', 'day', 'month', 'day_of_week', 'is_weekend', 'temperature', 'humidity', 'wind_speed']
     features = pd.DataFrame([[hour, day, month, day_of_week, is_weekend, temperature, humidity, wind_speed]],
-                        columns=columns)
+                            columns=columns)
+
     # Predict
     prediction = model.predict(features)
     predicted_value = round(prediction[0], 2)
 
-    # Friendly message
+    # Weather summary
+    weather_desc = get_weather_description(temperature, humidity, wind_speed)
+
+    # Final message
     message = f"🔋 Predicted Energy Consumption for {location}: {predicted_value} kWh ⚡"
 
-    return render_template('result.html', prediction=predicted_value, location=location, message=message)
+    # Render result
+    return render_template('result.html',
+                           prediction=predicted_value,
+                           location=location,
+                           message=message,
+                           weather_desc=weather_desc)
 
 # Home page
 @app.route('/')
