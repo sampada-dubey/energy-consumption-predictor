@@ -13,12 +13,12 @@ file_path = os.path.join(base_dir, 'data', 'energy_data.csv')
 # Try reading the CSV file
 try:
     df = pd.read_csv(file_path)
-    print("✅ CSV loaded successfully.")
+    print("CSV loaded successfully.")
 except Exception as e:
-    print("❌ Failed to load CSV:", e)
+    print("Failed to load CSV:", e)
     exit()
 
-# ✅ Check columns
+# Check columns
 print("📊 Available columns:", df.columns)
 
 # Step 1: Convert types (optional, for safety)
@@ -42,9 +42,9 @@ model.fit(X_train, y_train)
 
 # Step 5: Evaluate the model
 y_pred = model.predict(X_test)
-print("📉 MSE:", mean_squared_error(y_test, y_pred))
-print("🎯 R2 Score:", r2_score(y_test, y_pred))
+print("MSE:", mean_squared_error(y_test, y_pred))
+print("R2 Score:", r2_score(y_test, y_pred))
 
 # Step 6: Save the model
 joblib.dump(model, 'model.pkl')
-print("✅ Model saved successfully as model.pkl")
+print("Model saved successfully as model.pkl")
