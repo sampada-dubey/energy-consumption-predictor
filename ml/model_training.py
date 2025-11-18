@@ -19,7 +19,7 @@ except Exception as e:
     exit()
 
 # Check columns
-print("📊 Available columns:", df.columns)
+print("Available columns:", df.columns)
 
 # Step 1: Convert types (optional, for safety)
 df['temperature'] = df['temperature'].astype(float)
