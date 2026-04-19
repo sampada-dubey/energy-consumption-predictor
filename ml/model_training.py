@@ -1,10 +1,11 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 import joblib
 import numpy as np
 import os
+import matplotlib.pyplot as plt
 
 # Load the dataset
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -42,9 +43,25 @@ model.fit(X_train, y_train)
 
 # Step 5: Evaluate the model
 y_pred = model.predict(X_test)
-print("MSE:", mean_squared_error(y_test, y_pred))
-print("R2 Score:", r2_score(y_test, y_pred))
+
+mae = mean_absolute_error(y_test, y_pred)
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print("MAE:", round(mae, 2))
+print("MSE:", round(mse, 2))
+print("R2 Score:", round(r2, 2))
+
+print("Sample predictions:", np.round(y_pred[:5], 2))
+
+plt.scatter(y_test, y_pred)
+plt.xlabel("Actual Energy Consumption")
+plt.ylabel("Predicted Energy Consumption")
+plt.title("Actual vs Predicted")
+plt.show()
 
 # Step 6: Save the model
-joblib.dump(model, 'model.pkl')
-print("Model saved successfully as model.pkl")
+model_path = os.path.join(base_dir, 'ml', 'model.pkl')
+joblib.dump(model, model_path)
+
+print("Model saved at:", model_path)
